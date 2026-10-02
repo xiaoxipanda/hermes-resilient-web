@@ -1,0 +1,83 @@
+name: Hermes compatibility
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "*.py"
+      - "plugin.yaml"
+      - "tests/**"
+      - ".github/workflows/hermes-compat.yml"
+  pull_request:
+    paths:
+      - "*.py"
+      - "plugin.yaml"
+      - "tests/**"
+      - ".github/workflows/hermes-compat.yml"
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hermes-compat-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Hermes ${{ matrix.channel }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: [stable, main]
+
+    steps:
+      - name: Resolve Hermes ref
+        id: hermes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANNEL: ${{ matrix.channel }}
+        run: |
+          set -euo pipefail
+          if [ "$CHANNEL" = "stable" ]; then
+            ref=$(curl -fsSL \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              https://api.github.com/repos/NousResearch/hermes-agent/releases/latest \
+              | jq -er '.tag_name')
+          else
+            ref=main
+          fi
+          printf 'ref=%s\n' "$ref" >> "$GITHUB_OUTPUT"
+          printf 'Testing Hermes ref: %s\n' "$ref"
+
+      - name: Check out Hermes
+        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+        with:
+          repository: NousResearch/hermes-agent
+          ref: ${{ steps.hermes.outputs.ref }}
+          persist-credentials: false
+
+      - name: Check out this plugin
+        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.sha }}
+          path: external-plugin
+          persist-credentials: false
+
+      - name: Prepare Hermes runtime
+        uses: ./.github/actions/setup-pm
+        with:
+          toolchain: python
+          extras: "[]"
+          cache-suffix: compat-${{ matrix.channel }}
+
+      - name: Validate plugin
+        shell: bash
+        run: hermes plugins validate "$GITHUB_WORKSPACE/external-plugin" --json

@@ -19,14 +19,10 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from agent.web_search_provider import WebSearchProvider, get_provider_env
+from agent.web_search_provider import WebSearchProvider
 from hermes_constants import get_hermes_home
-from plugins.web.ddgs.provider import DDGSWebSearchProvider
-from plugins.web.exa.provider import ExaWebSearchProvider
-from plugins.web.firecrawl.provider import FirecrawlWebSearchProvider
-from plugins.web.parallel.provider import ParallelWebSearchProvider
-from plugins.web.searxng.provider import SearXNGWebSearchProvider
-from plugins.web.tavily.provider import TavilyWebSearchProvider
+
+from .compat import load_builtin_providers, provider_is_available
 
 logger = logging.getLogger(__name__)
 
@@ -193,29 +189,13 @@ class ResilientWebProvider(WebSearchProvider):
     def _providers(self) -> Dict[str, WebSearchProvider]:
         if self._injected_providers is not None:
             return dict(self._injected_providers)
-        return {
-            "exa": ExaWebSearchProvider(),
-            "parallel-mcp": ParallelMCPWebProvider(self._settings),
-            "parallel": ParallelWebSearchProvider(),
-            "tavily": TavilyWebSearchProvider(),
-            "firecrawl": FirecrawlWebSearchProvider(),
-            "searxng": SearXNGWebSearchProvider(),
-            "ddgs": DDGSWebSearchProvider(),
-        }
+        return load_builtin_providers(
+            additional=(("parallel-mcp", ParallelMCPWebProvider(self._settings)),),
+            logger=logger,
+        )
 
     def _provider_available(self, name: str, provider: WebSearchProvider) -> bool:
-        try:
-            if self._injected_providers is not None:
-                return bool(provider.is_available())
-            if name == "firecrawl":
-                if get_provider_env("FIRECRAWL_API_KEY") or get_provider_env("FIRECRAWL_API_URL"):
-                    return True
-                from agent.web_search_registry import _keyless_tier_enabled
-                return bool(_keyless_tier_enabled() and provider.is_keyless_available())
-            return bool(provider.is_available())
-        except Exception as exc:
-            logger.debug("provider %s availability failed: %s", name, _clean_error(exc))
-            return False
+        return provider_is_available(name, provider, logger)
 
     @contextmanager
     def _state_lock(self):

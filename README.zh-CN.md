@@ -198,6 +198,14 @@ python -m compileall -q .
 hermes plugins validate . --json
 ```
 
+`Hermes compatibility` 工作流会动态获取 Hermes 最新稳定版本，同时检查 Hermes
+`main`。每个任务都会使用对应版本的锁定运行时，并对本仓库执行真实的
+`hermes plugins validate`。
+
+Hermes 集成细节集中在 [`compat.py`](compat.py)。Provider 可用性只通过公开的
+`is_available()` 和 `is_keyless_available()` 接口判断；某个内置 Provider
+模块缺失时会跳过该 Provider，不会导致整个插件加载失败。
+
 提交修改前请阅读 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
 
 ## 许可证

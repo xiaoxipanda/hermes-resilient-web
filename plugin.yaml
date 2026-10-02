@@ -1,7 +1,7 @@
 manifest_version: 2
 api_version: 1
 name: resilient-web
-version: 0.1.0
+version: 0.2.0
 description: "Resilient sequential failover and parallel multi-provider web discovery for Hermes Agent."
 author: hermes-resilient-web contributors
 kind: backend

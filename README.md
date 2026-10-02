@@ -198,6 +198,15 @@ Validate the plugin against an installed Hermes checkout:
 hermes plugins validate . --json
 ```
 
+The `Hermes compatibility` workflow resolves the latest published Hermes release
+and also checks Hermes `main`. Each lane prepares that revision's locked runtime
+and runs its real `hermes plugins validate` command against this repository.
+
+Hermes integration details are isolated in [`compat.py`](compat.py). Provider
+availability uses the public `is_available()` and `is_keyless_available()`
+contracts; a missing built-in provider module is skipped without preventing the
+plugin from loading.
+
 Tests use fake providers and make no network calls. See [`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting changes.
 
 ## License

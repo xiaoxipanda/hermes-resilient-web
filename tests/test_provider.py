@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextvars
 import importlib.util
+import logging
 import os
 import sys
 import tempfile
@@ -11,6 +12,7 @@ import time
 import types
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -80,6 +82,7 @@ def _load_provider_module():
 
 
 provider_module = _load_provider_module()
+compat_module = sys.modules["resilient_web_plugin.compat"]
 
 
 def row(url: str, title: str, position: int = 1, description: str = "") -> dict:
@@ -139,6 +142,63 @@ class FakeProvider:
     def extract(self, urls, **kwargs):
         self.extract_calls.append((list(urls), kwargs))
         return self.extract_result
+
+
+class CompatibilityLayerTests(unittest.TestCase):
+    def test_public_keyless_capability_makes_provider_available(self):
+        class KeylessOnly:
+            def is_available(self):
+                return False
+
+            def is_keyless_available(self):
+                return True
+
+        self.assertTrue(
+            compat_module.provider_is_available(
+                "keyless", KeylessOnly(), logging.getLogger("test")
+            )
+        )
+
+    def test_keyless_check_still_runs_when_direct_check_raises(self):
+        class KeylessOnly:
+            def is_available(self):
+                raise RuntimeError("direct probe failed")
+
+            def is_keyless_available(self):
+                return True
+
+        self.assertTrue(
+            compat_module.provider_is_available(
+                "keyless", KeylessOnly(), logging.getLogger("test")
+            )
+        )
+
+    def test_missing_builtin_provider_module_is_skipped(self):
+        exa_module = types.SimpleNamespace(
+            ExaWebSearchProvider=type("ExaWebSearchProvider", (), {})
+        )
+
+        def import_module(name):
+            if name == "plugins.web.exa.provider":
+                return exa_module
+            raise ModuleNotFoundError(name)
+
+        marker = object()
+        with mock.patch.object(
+            compat_module.importlib, "import_module", side_effect=import_module
+        ):
+            providers = compat_module.load_builtin_providers(
+                additional=(("parallel-mcp", marker),),
+                logger=logging.getLogger("test"),
+            )
+
+        self.assertIs(providers["parallel-mcp"], marker)
+        self.assertEqual(type(providers["exa"]).__name__, "ExaWebSearchProvider")
+        self.assertEqual(set(providers), {"parallel-mcp", "exa"})
+
+    def test_plugin_does_not_reference_private_keyless_registry_api(self):
+        source = (ROOT / "provider.py").read_text() + (ROOT / "compat.py").read_text()
+        self.assertNotIn("_keyless_tier_enabled", source)
 
 
 class ResilientWebProviderTests(unittest.TestCase):
