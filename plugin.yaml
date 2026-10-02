@@ -1,0 +1,80 @@
+manifest_version: 2
+api_version: 1
+name: resilient-web
+version: 0.1.0
+description: "Resilient sequential failover and parallel multi-provider web discovery for Hermes Agent."
+author: hermes-resilient-web contributors
+kind: backend
+license: MIT
+homepage: "https://github.com/xiaoxipanda/hermes-resilient-web"
+requires_hermes: ">=0.21.5"
+tags:
+  - web
+  - search
+  - research
+  - failover
+provides_web_providers:
+  - resilient-web
+provides_tools:
+  - deep_web_search
+config_schema:
+  search_order:
+    type: list
+    default: [exa, parallel-mcp, parallel, tavily, firecrawl, searxng, ddgs]
+    description: "Ordered providers for the standard web_search tool."
+  extract_order:
+    type: list
+    default: [tavily, parallel-mcp, parallel, firecrawl, exa]
+    description: "Ordered providers for the standard web_extract tool."
+  fallback_on_empty:
+    type: bool
+    default: true
+    description: "Continue to the next sequential provider when a search returns no results."
+  rate_limit_cooldown_seconds:
+    type: int
+    default: 900
+    description: "Cooldown after a provider returns a rate-limit error."
+  auth_cooldown_seconds:
+    type: int
+    default: 21600
+    description: "Cooldown after an authentication error."
+  forbidden_cooldown_seconds:
+    type: int
+    default: 3600
+    description: "Cooldown after a provider returns HTTP 403."
+  transient_cooldown_seconds:
+    type: int
+    default: 120
+    description: "Cooldown after timeouts, connection failures, or 5xx errors."
+  parallel_mcp_enabled:
+    type: bool
+    default: true
+    description: "Enable the anonymous Parallel Search MCP adapter when the Hermes MCP dependency is available."
+  parallel_mcp_url:
+    type: str
+    default: "https://search.parallel.ai/mcp"
+    description: "Parallel Search MCP endpoint."
+  parallel_mcp_timeout_seconds:
+    type: int
+    default: 45
+    description: "Timeout for Parallel Search MCP calls."
+  deep_primary_order:
+    type: list
+    default: [exa, parallel-mcp, tavily]
+    description: "Providers used by the first deep_web_search wave."
+  deep_fallback_order:
+    type: list
+    default: [parallel, firecrawl, searxng, ddgs]
+    description: "Providers used when the primary deep-search wave is thin or fails."
+  deep_min_results:
+    type: int
+    default: 8
+    description: "Minimum unique primary results before the fallback wave is skipped."
+  deep_min_successful_providers:
+    type: int
+    default: 2
+    description: "Minimum successful primary providers before the fallback wave is skipped."
+  deep_fallback_parallelism:
+    type: int
+    default: 3
+    description: "Maximum concurrent calls in the fallback wave."

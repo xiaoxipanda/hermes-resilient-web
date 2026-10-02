@@ -1,0 +1,47 @@
+web:
+  search_backend: resilient-web
+  extract_backend: resilient-web
+  keyless_fallback: true
+  provider_tier:
+    firecrawl: free
+
+plugins:
+  enabled:
+    - resilient-web
+  entries:
+    resilient-web:
+      settings:
+        search_order:
+          - exa
+          - parallel-mcp
+          - parallel
+          - tavily
+          - firecrawl
+          - searxng
+          - ddgs
+        extract_order:
+          - tavily
+          - parallel-mcp
+          - parallel
+          - firecrawl
+          - exa
+        fallback_on_empty: true
+        rate_limit_cooldown_seconds: 900
+        auth_cooldown_seconds: 21600
+        forbidden_cooldown_seconds: 3600
+        transient_cooldown_seconds: 120
+        parallel_mcp_enabled: true
+        parallel_mcp_url: https://search.parallel.ai/mcp
+        parallel_mcp_timeout_seconds: 45
+        deep_primary_order:
+          - exa
+          - parallel-mcp
+          - tavily
+        deep_fallback_order:
+          - parallel
+          - firecrawl
+          - searxng
+          - ddgs
+        deep_min_results: 8
+        deep_min_successful_providers: 2
+        deep_fallback_parallelism: 3
