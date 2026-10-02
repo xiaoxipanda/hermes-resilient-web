@@ -26,58 +26,65 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
-    name: Hermes ${{ matrix.channel }}
+  stable:
+    name: Hermes latest stable
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        channel: [stable, main]
 
     steps:
+      - name: Check out this plugin
+        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+        with:
+          persist-credentials: false
+
       - name: Resolve Hermes ref
         id: hermes
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          CHANNEL: ${{ matrix.channel }}
         run: |
           set -euo pipefail
-          if [ "$CHANNEL" = "stable" ]; then
-            ref=$(curl -fsSL \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              https://api.github.com/repos/NousResearch/hermes-agent/releases/latest \
-              | jq -er '.tag_name')
-          else
-            ref=main
+          ref=$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            https://api.github.com/repos/NousResearch/hermes-agent/releases/latest \
+            | jq -er '.tag_name')
+          if [[ ! "$ref" =~ ^v[0-9]{4}\.[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            printf 'Unexpected Hermes release tag: %s\n' "$ref" >&2
+            exit 1
           fi
           printf 'ref=%s\n' "$ref" >> "$GITHUB_OUTPUT"
           printf 'Testing Hermes ref: %s\n' "$ref"
 
-      - name: Check out Hermes
-        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
-          repository: NousResearch/hermes-agent
-          ref: ${{ steps.hermes.outputs.ref }}
-          persist-credentials: false
+          python-version: "3.11"
 
+      - name: Install latest stable Hermes
+        shell: bash
+        env:
+          HERMES_REF: ${{ steps.hermes.outputs.ref }}
+        run: |
+          set -euo pipefail
+          pip install "git+https://github.com/NousResearch/hermes-agent@${HERMES_REF}"
+
+      - name: Validate plugin
+        run: hermes plugins validate "$GITHUB_WORKSPACE" --json
+
+  main:
+    name: Hermes main
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
       - name: Check out this plugin
         uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
         with:
-          repository: ${{ github.repository }}
-          ref: ${{ github.sha }}
-          path: external-plugin
           persist-credentials: false
 
-      - name: Prepare Hermes runtime
-        uses: ./.github/actions/setup-pm
+      - name: Validate with Hermes main
+        uses: NousResearch/hermes-agent/.github/actions/plugin-validate@main
         with:
-          toolchain: python
-          extras: "[]"
-          cache-suffix: compat-${{ matrix.channel }}
-
-      - name: Validate plugin
-        shell: bash
-        run: hermes plugins validate "$GITHUB_WORKSPACE/external-plugin" --json
+          path: .
+          hermes-ref: main
