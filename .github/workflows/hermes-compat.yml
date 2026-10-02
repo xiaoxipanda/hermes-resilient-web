@@ -67,7 +67,10 @@ jobs:
           HERMES_REF: ${{ steps.hermes.outputs.ref }}
         run: |
           set -euo pipefail
-          pip install "git+https://github.com/NousResearch/hermes-agent@${HERMES_REF}"
+          source="$RUNNER_TEMP/hermes-stable"
+          git clone --depth 1 --branch "$HERMES_REF" \
+            https://github.com/NousResearch/hermes-agent.git "$source"
+          pip install -e "$source"
 
       - name: Validate plugin
         run: hermes plugins validate "$GITHUB_WORKSPACE" --json
