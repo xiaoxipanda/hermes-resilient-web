@@ -1,5 +1,7 @@
 # hermes-resilient-web
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 A community plugin for [Hermes Agent](https://github.com/NousResearch/hermes-agent) that adds:
 
 - ordered failover for the built-in `web_search` and `web_extract` tools;
@@ -12,6 +14,27 @@ This repository is not an official Nous Research project.
 ## How it works
 
 The plugin reuses Hermes' built-in provider implementations. It does not reimplement vendor SDKs or store credentials.
+
+```mermaid
+flowchart LR
+    Simple["web_search"] --> Sequential["Sequential failover"]
+    Extract["web_extract"] --> ExtractRoute["Sequential extraction"]
+    Deep["deep_web_search"] --> Primary["Primary wave<br/>bounded concurrency"]
+
+    Sequential --> SearchOrder["Exa -> Parallel MCP -> Parallel API<br/>-> Tavily -> Firecrawl -> SearXNG -> DDGS"]
+    ExtractRoute --> ExtractOrder["Tavily -> Parallel MCP -> Parallel API<br/>-> Firecrawl -> Exa"]
+
+    Primary --> Exa["Exa"]
+    Primary --> PMCP["Parallel MCP"]
+    Primary --> Tavily["Tavily"]
+    Exa --> Coverage{"Coverage sufficient?"}
+    PMCP --> Coverage
+    Tavily --> Coverage
+
+    Coverage -- "Yes" --> Merge["Canonicalize URLs<br/>Deduplicate<br/>Rank by agreement"]
+    Coverage -- "No" --> Fallback["Fallback wave<br/>Parallel API / Firecrawl / SearXNG / DDGS"]
+    Fallback --> Merge
+```
 
 | Path | Default providers |
 |---|---|

@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+- Added a complete Simplified Chinese README.
+- Added language navigation and Mermaid architecture diagrams to both READMEs.
+
 ## 0.1.0 - 2026-10-02
 
 - Added ordered search and extraction failover across Hermes web providers.
