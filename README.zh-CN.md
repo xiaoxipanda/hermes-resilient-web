@@ -50,21 +50,35 @@ flowchart LR
 ## 环境要求
 
 - Hermes Agent `0.21.5` 或更高版本
-- Python `3.11` 至 `3.14`，与 Hermes 支持范围一致
+- Python `>=3.11,<3.15`，实际解释器版本由已安装的 Hermes 版本决定
 - 至少一个可用的 Hermes Web Provider
 
-可以通过 Hermes 准备可选 Provider 依赖：
+插件没有强制安装的第三方 Python 包。Provider SDK 保持可选，并通过
+Hermes 安装：
 
 ```bash
 hermes pm install \
   --extra exa \
   --extra parallel-web \
   --extra firecrawl \
-  --extra ddgs \
   --extra mcp
 ```
 
 只需安装实际启用的 Provider 对应依赖。
+
+| 路径 | Hermes extra | Hermes 管理的直接依赖版本 |
+|---|---|---|
+| Exa | `exa` | `exa-py==2.10.2` |
+| Parallel API | `parallel-web` | `parallel-web==0.4.2` |
+| Firecrawl | `firecrawl` | `firecrawl-py==4.17.0` |
+| Parallel MCP | `mcp` | `mcp==2.0.0`、`httpx2==2.7.0`、`starlette==1.3.1` |
+| DDGS | `ddgs` | `ddgs==9.16.0` |
+| Tavily / SearXNG | 无 | 使用 Hermes 核心 HTTP 依赖 |
+
+Hermes `v2026.9.24` 尚未提供 `ddgs` PM extra；该 extra 已存在于 Hermes
+`main`，并会随包含它的后续稳定版本提供。完整的兼容性矩阵和依赖策略见
+[`DEPENDENCIES.md`](DEPENDENCIES.md)，机器可读版本记录见
+[`dependencies.toml`](dependencies.toml)。
 
 ## 安装
 

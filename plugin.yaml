@@ -1,13 +1,14 @@
 manifest_version: 2
 api_version: 1
 name: resilient-web
-version: 0.2.0
+version: 0.2.1
 description: "Resilient sequential failover and parallel multi-provider web discovery for Hermes Agent."
 author: hermes-resilient-web contributors
 kind: backend
 license: MIT
 homepage: "https://github.com/xiaoxipanda/hermes-resilient-web"
 requires_hermes: ">=0.21.5"
+python_dependencies: []
 tags:
   - web
   - search

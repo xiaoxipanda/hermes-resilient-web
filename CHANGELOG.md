@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## 0.2.1 - 2026-10-03
+
+- Declared that the plugin has no mandatory third-party Python dependencies.
+- Added a machine-readable Python, Hermes, and optional-provider compatibility matrix.
+- Documented the exact provider package pins managed by verified Hermes revisions.
+- Added stable and `main` CI checks that detect drift in Hermes provider extras.
+- Corrected DDGS installation guidance for Hermes `v2026.9.24`, which has no `ddgs` PM extra.
+
 ## 0.2.0 - 2026-10-02
 
 - Added a complete Simplified Chinese README.

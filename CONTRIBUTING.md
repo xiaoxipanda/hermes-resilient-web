@@ -13,6 +13,7 @@ When Hermes is installed locally, also run:
 
 ```bash
 hermes plugins validate . --json
+python scripts/check-hermes-dependencies.py /path/to/hermes-agent/pyproject.toml
 ```
 
 ## Change requirements
@@ -23,6 +24,7 @@ hermes plugins validate . --json
 - Never commit API keys, tokens, private URLs, user identifiers, or captured search content.
 - Document any new network destination and whether it receives queries or fetched URLs.
 - Keep provider dependencies optional and loaded through Hermes where possible.
+- Keep `dependencies.toml` synchronized with the exact pins in Hermes provider extras.
 
 ## Pull requests
 

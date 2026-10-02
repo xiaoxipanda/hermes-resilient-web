@@ -6,12 +6,18 @@ on:
     paths:
       - "*.py"
       - "plugin.yaml"
+      - "dependencies.toml"
+      - "DEPENDENCIES.md"
+      - "scripts/check-hermes-dependencies.py"
       - "tests/**"
       - ".github/workflows/hermes-compat.yml"
   pull_request:
     paths:
       - "*.py"
       - "plugin.yaml"
+      - "dependencies.toml"
+      - "DEPENDENCIES.md"
+      - "scripts/check-hermes-dependencies.py"
       - "tests/**"
       - ".github/workflows/hermes-compat.yml"
   schedule:
@@ -72,6 +78,12 @@ jobs:
             https://github.com/NousResearch/hermes-agent.git "$source"
           pip install -e "$source"
 
+      - name: Check provider dependency pins
+        shell: bash
+        run: |
+          python scripts/check-hermes-dependencies.py \
+            "$RUNNER_TEMP/hermes-stable/pyproject.toml"
+
       - name: Validate plugin
         run: hermes plugins validate "$GITHUB_WORKSPACE" --json
 
@@ -85,6 +97,21 @@ jobs:
         uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
         with:
           persist-credentials: false
+
+      - name: Set up metadata checker
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: "3.11"
+
+      - name: Check provider dependency pins
+        shell: bash
+        run: |
+          source="$RUNNER_TEMP/hermes-main"
+          git clone --depth 1 \
+            https://github.com/NousResearch/hermes-agent.git "$source"
+          python scripts/check-hermes-dependencies.py \
+            "$source/pyproject.toml" \
+            --require-extra ddgs
 
       - name: Validate with Hermes main
         uses: NousResearch/hermes-agent/.github/actions/plugin-validate@main

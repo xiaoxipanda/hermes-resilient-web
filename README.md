@@ -50,21 +50,36 @@ Results with the same canonical URL are merged. Sources returned by multiple pro
 ## Requirements
 
 - Hermes Agent `0.21.5` or newer
-- Python `3.11` through `3.14`, matching Hermes' supported range
+- Python `>=3.11,<3.15`; the installed Hermes release selects the actual interpreter
 - At least one usable Hermes web provider
 
-Optional provider dependencies can be prepared through Hermes:
+The plugin has no mandatory third-party Python packages. Provider SDKs remain
+optional and are installed through Hermes:
 
 ```bash
 hermes pm install \
   --extra exa \
   --extra parallel-web \
   --extra firecrawl \
-  --extra ddgs \
   --extra mcp
 ```
 
 Install only the extras needed by your configured routes.
+
+| Route | Hermes extra | Hermes-managed direct pins |
+|---|---|---|
+| Exa | `exa` | `exa-py==2.10.2` |
+| Parallel API | `parallel-web` | `parallel-web==0.4.2` |
+| Firecrawl | `firecrawl` | `firecrawl-py==4.17.0` |
+| Parallel MCP | `mcp` | `mcp==2.0.0`, `httpx2==2.7.0`, `starlette==1.3.1` |
+| DDGS | `ddgs` | `ddgs==9.16.0` |
+| Tavily / SearXNG | none | Hermes core HTTP dependencies |
+
+Hermes `v2026.9.24` does not expose the `ddgs` PM extra; it is available on
+Hermes `main` and later releases that include it. See
+[`DEPENDENCIES.md`](DEPENDENCIES.md) and the machine-readable
+[`dependencies.toml`](dependencies.toml) for the verified compatibility matrix
+and dependency policy.
 
 ## Installation
 
